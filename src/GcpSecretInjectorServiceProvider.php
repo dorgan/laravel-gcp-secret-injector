@@ -5,7 +5,6 @@ namespace Agz\LaravelGcpSecretInjector;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Agz\LaravelGcpSecretInjector\Facades\SecretInjector as SecretInjectorFacade;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Foundation\Bootstrap\LoadConfiguration;
 
 class GcpSecretInjectorServiceProvider extends ServiceProvider
@@ -17,7 +16,9 @@ class GcpSecretInjectorServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        if (!$this->shouldLoadSecretsForEnvironment()) {
+            return;
+        }
 
         $this->app->singleton('agz-gcp-secret-injector', function (Application $app) {
             return new GcpSecretInjector([
@@ -51,10 +52,14 @@ class GcpSecretInjectorServiceProvider extends ServiceProvider
 
     public function loadSecrets()
     {
+        if (!$this->shouldLoadSecretsForEnvironment()) {
+            return;
+        }
+
         $secrets = config('secret-injector.secrets');
         if (is_array($secrets)) {
             foreach ($secrets as $key => $value) {
-                SecretInjectorFacade::loadSecret($key, $value, config('secret-injector.includedEnvs'));
+                SecretInjectorFacade::loadSecret($key, $value);
             }
 
 
@@ -65,5 +70,18 @@ class GcpSecretInjectorServiceProvider extends ServiceProvider
 
             $v->bootstrap($this->app);
         }
+    }
+
+    /**
+     * Determine whether the injector should run for the current APP_ENV.
+     *
+     * @return bool
+     */
+    protected function shouldLoadSecretsForEnvironment()
+    {
+        $includedEnvs = config('secret-injector.includedEnvs', ['production']);
+        $appEnv = env('APP_ENV');
+
+        return is_array($includedEnvs) && in_array($appEnv, $includedEnvs);
     }
 }
