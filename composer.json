@@ -3,7 +3,6 @@
     "description": "Include GCP secrets in you laravel environment without explicitly declaring them in your .env files",
     "type": "library",
     "license": "MIT",
-    "version": "0.0.1",
     "autoload": {
         "psr-4": {
             "Agz\\LaravelGcpSecretInjector\\": "src/"
